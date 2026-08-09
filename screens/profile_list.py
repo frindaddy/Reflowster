@@ -14,7 +14,7 @@ class ReflowProfileList(ModalScreen):
     def compose(self) -> ComposeResult:
         with Vertical(id="profile-list"):
             yield Label("Select a Reflow Profile:")
-            yield DirectoryTree("profiles/", id="profile-tree")
+            yield DirectoryTree("reflow_profiles/", id="profile-tree")
             
     def action_close_modal(self) -> None:
         self.dismiss()
