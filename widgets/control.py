@@ -23,7 +23,7 @@ class ReflowControl(Vertical):
         yield Label(id="relay-state")
         
         with Vertical(id="profile-selection"):
-            yield Button("Change Profile", id="change-profile", variant="default")
+            yield Button("Change Profile", id="change-profile", variant="primary")
             yield Label("Current Profile:")
             yield Label(id="profile-label")
         
