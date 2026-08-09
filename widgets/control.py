@@ -17,7 +17,23 @@ class ReflowControl(Vertical):
     current_temperature = reactive(0.0)
     current_time = reactive(0)
     relay_state = reactive(False)
-    current_reflow_profile = reactive({"name": "Not Loaded", "description": "", "points": []})
+    current_reflow_profile = reactive(
+        {
+            "name": "Sn63Pb37 #5",
+            "description": "Reflow profile for Sn63Pb37 solder paste (#5). Times in seconds, temps in °C (e.g. points: [time, temperature]). Max temp is 250C.",
+            "metadata": { "paste": "Sn63Pb37", "type": "#5", "author": "Reflowster-default" },
+            "safety": { "max_temp_c": 260 },
+            "points": [
+                [0, 25],
+                [90, 150],
+                [150, 170],
+                [210, 170],
+                [255, 235],
+                [285, 235],
+                [360, 50]
+            ]
+        }
+    )
     
     def compose(self) -> ComposeResult:
         yield Button("Start", id="start", variant="success")
