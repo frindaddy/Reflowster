@@ -1,8 +1,7 @@
 {
   "name": "Sn63Pb37 #5",
-  "description": "Example reflow profile for Sn63Pb37 solder paste (#5). Times in seconds, temps in °C.",
+  "description": "Reflow profile for Sn63Pb37 solder paste (#5). Times in seconds, temps in °C.",
   "metadata": { "paste": "sn63pb37", "type": "#5", "author": "Reflowster-default" },
-  "pid": { "kp": 30.0, "ki": 0.5, "kd": 0.0 },
   "safety": { "max_temp_c": 260 },
   "points": [
     [0, 25],
