@@ -19,3 +19,7 @@ class SSR:
     def is_on(self) -> bool:
         """Check if the SSR is currently on."""
         return self.relay.is_active
+    
+    def on_unmount(self):
+        """Ensure the SSR is turned off when the program is closed."""
+        self.off()
