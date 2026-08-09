@@ -3,7 +3,7 @@ from textual.app import ComposeResult
 from textual.containers import Vertical
 from textual.reactive import reactive
 from textual.widgets import Button, Label
-from textual_plotext import PlotextPlot
+
 from screens.profile_list import ReflowProfileList
 
 
