@@ -24,6 +24,13 @@ ReflowCurvePlot {
     height: 100%;
 }
 
+#profile-label {
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    text-wrap: wrap;
+}
+
 #profile-list {
     margin: 5 20 5 20;
     padding: 0 1 1 1;
