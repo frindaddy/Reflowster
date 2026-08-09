@@ -9,7 +9,14 @@ class ReflowCurvePlot(PlotextPlot):
         self.plt.xlabel("Time (s)")
         self.plt.ylabel("Temperature (°C)")
         
-        target_temp = self.plt.sin() # sinusoidal test signal
-        actual_temp = self.plt.square() # square wave test signal
-        self.plt.plot(target_temp, label="Target Temperature", color="blue")
-        self.plt.plot(actual_temp, label="Actual Temperature", color="red")
+        self.plt.text("NO PROFILE LOADED", 0, 0, color="red")
+        
+    def update_target_curve(self, points: list[list[float]]) -> None:
+        """Update the target temperature curve."""
+        if not points:
+            return
+        
+        times, temps = zip(*points)
+        self.plt.clear_data()
+        self.plt.plot(times, temps, label="Target Temperature", color="blue")
+        self.refresh()

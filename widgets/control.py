@@ -1,4 +1,8 @@
 from textual import on
+import json
+import time
+from pathlib import Path
+
 from textual.app import ComposeResult
 from textual.containers import Vertical
 from textual.reactive import reactive
@@ -13,7 +17,7 @@ class ReflowControl(Vertical):
     current_temperature = reactive(0.0)
     current_time = reactive(0)
     relay_state = reactive(False)
-    current_reflow_profile = reactive("Default")
+    current_reflow_profile = reactive({"name": "Not Loaded", "description": "", "points": []})
     
     def compose(self) -> ComposeResult:
         yield Button("Start", id="start", variant="success")
@@ -31,8 +35,22 @@ class ReflowControl(Vertical):
         self.query_one("#current-temp", Label).update(f"Current Temp: {self.current_temperature:.1f}°C")
         self.query_one("#current-time", Label).update(f"Current Time: {int(self.current_time)}s")
         self.query_one("#relay-state", Label).update(f"Relay State: {'ON' if self.relay_state else 'OFF'}")
-        self.query_one("#profile-label", Label).update(f"{self.current_reflow_profile}")
+        self.query_one("#profile-label", Label).update(f"{self.current_reflow_profile.get('name', 'Not Loaded')}")
+    
+    def on_profile_selected(self, selected_file: Path | None) -> None:
+        """Handle the selection of a reflow profile."""
         
+        if selected_file is None:
+            return
+        
+        try:
+            self.current_reflow_profile = json.loads(selected_file.read_text())
+            self.app.log(f"Selected reflow profile: {selected_file}")
+            
+        except json.JSONDecodeError:
+            self.app.log(f"Error decoding reflow profile: {selected_file}")
+            return
+    
     def watch_current_temperature(self, value: float) -> None:
         self.query_one("#current-temp", Label).update(f"Current Temp: {value:.1f}°C")
         
@@ -42,8 +60,11 @@ class ReflowControl(Vertical):
     def watch_relay_state(self, value: bool) -> None:
         self.query_one("#relay-state", Label).update(f"Relay State: {'ON' if value else 'OFF'}")
         
-    def watch_current_reflow_profile(self, value: str) -> None:
-        self.query_one("#profile-label", Label).update(f"{value}")
+    def watch_current_reflow_profile(self, value: dict) -> None:
+        self.query_one("#profile-label", Label).update(f"{value.get('name', 'Not Loaded')}")
+        
+        target_reflow_curve = value.get("points", [])
+        self.app.query_one("ReflowCurvePlot").update_target_curve(target_reflow_curve)
         
     @on(Button.Pressed, "#start")
     def start_reflow(self) -> None:
