@@ -1,0 +1,14 @@
+{
+  "name": "Sn60Pb40 (Leaded)",
+  "description": "Standard leaded reflow profile for Sn60Pb40 solder paste (Melting Range 183-191\u00b0C). Times in seconds, temps in \u00b0C.",
+  "metadata": {"paste": "Sn60Pb40", "type": "leaded", "author": "Google Gemini"},
+  "safety": {"max_temp_c": 250},
+  "points": [
+    [0,25],
+    [90,150],
+    [150,175],
+    [210,225],
+    [240,225],
+    [315,50]
+  ]
+}

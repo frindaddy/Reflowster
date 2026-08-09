@@ -1,0 +1,14 @@
+{
+  "name": "Sn99.3Cu0.7 (SAC0307 / Lead-Free)",
+  "description": "Low-cost lead-free reflow profile for Sn99.3Cu0.7 solder paste (Melting Point 227\u00b0C). Times in seconds, temps in \u00b0C.",
+  "metadata": {"paste": "Sn993Cu07","type": "lead-free","author": "Google Gemini"},
+  "safety": {"max_temp_c": 265},
+  "points": [
+    [0,25],
+    [90,150],
+    [180,210],
+    [225,250],
+    [255,250],
+    [330,50]
+  ]
+}
