@@ -30,10 +30,12 @@ class ReflowControl(Vertical):
     ]
     
     def __init__(self, relay_pin: int, spi: board.SPI, cs: digitalio.DigitalInOut) -> None:
+        super().__init__()
         self.relay_pin = relay_pin
         self.spi = spi
         self.cs = cs
-        
+        self.sensor = MAX31855(spi=self.spi, cs=self.cs)
+
         self.current_temperature = reactive(0.0)
         self.current_time = reactive(0)
         self.relay_state = reactive(False)
@@ -71,7 +73,7 @@ class ReflowControl(Vertical):
     def on_mount(self) -> None:
         self.query_one("#current-temp", Label).update(f"Current Temp: {self.current_temperature:.1f}°C")
         self.query_one("#current-time", Label).update(f"Current Time: {int(self.current_time)}s")
-        self.query_one("#relay-state", Label).update(f"Relay State: {"[bold red]OFF[/]"}")
+        self.query_one("#relay-state", Label).update("Relay State: [bold red]OFF[/]")
         self.query_one("#profile-label", Label).update(f"{self.current_reflow_profile.get('name', 'Not Loaded')}")
         
         self.update_temperature()
@@ -82,14 +84,19 @@ class ReflowControl(Vertical):
     
     def on_profile_selected(self, selected_file: Path | None) -> None:
         """Handle the selection of a reflow profile."""
-        
+
         if selected_file is None:
             return
-        
+
         try:
-            self.current_reflow_profile = json.loads(selected_file.read_text())
+            profile_data = json.loads(selected_file.read_text())
+            if not isinstance(profile_data, dict) or not isinstance(profile_data.get("points"), list):
+                self.app.log(f"Selected reflow profile is invalid: {selected_file}")
+                return
+
+            self.current_reflow_profile = profile_data
             self.app.log(f"Selected reflow profile: {selected_file}")
-            
+
         except json.JSONDecodeError:
             self.app.log(f"Error decoding reflow profile: {selected_file}")
             return
@@ -134,8 +141,12 @@ class ReflowControl(Vertical):
         
     def update_temperature(self) -> None:
         """Update the current temperature from the MAX31855 sensor."""
-        sensor = MAX31855(spi=self.spi, cs=self.cs)
-        self.current_temperature = sensor.read_temperature()
+        temperature = self.sensor.read_temperature()
+        if temperature is None:
+            self.app.log("Temperature sensor returned no reading.")
+            return
+
+        self.current_temperature = temperature
     
     def watch_current_temperature(self, value: float) -> None:
         self.query_one("#current-temp", Label).update(f"Current Temp: {value:.1f}°C")
@@ -144,13 +155,14 @@ class ReflowControl(Vertical):
         self.query_one("#current-time", Label).update(f"Current Time: {value}s")
         
     def watch_relay_state(self, value: bool) -> None:
-        self.query_one("#relay-state", Label).update(f"Relay State: {"[bold green]ON[/]" if value else "[bold red]OFF[/]"}")
+        label_text = "Relay State: [bold green]ON[/]" if value else "Relay State: [bold red]OFF[/]"
+        self.query_one("#relay-state", Label).update(label_text)
         
     def watch_current_reflow_profile(self, value: dict) -> None:
         self.query_one("#profile-label", Label).update(f"{value.get('name', 'Not Loaded')}")
         
         target_reflow_curve = value.get("points", [])
-        self.app.query_one("ReflowCurvePlot").update_target_curve(target_reflow_curve)
+        self.app.query_one(ReflowCurvePlot).update_target_curve(target_reflow_curve)
         
     @on(Button.Pressed, "#start")
     def start_reflow(self) -> None:
@@ -160,27 +172,35 @@ class ReflowControl(Vertical):
         change_profile_button = self.query_one("#change-profile", Button)
         
         # Clear previous run's actual temperature line on the plot
-        self.app.query_one("ReflowCurvePlot").clear_actual_curve()
+        self.app.query_one(ReflowCurvePlot).clear_actual_curve()
         
-        pid_parameters_file_path = Path("pid_parameters.json")
-        pid_parameters = {"Kp": 1.0, "Ki": 0.1, "Kd":0.01}
-        
+        pid_parameters_file_path = Path(__file__).resolve().parents[1] / "pid_parameters.json"
+        pid_parameters = {"Kp": 1.0, "Ki": 0.1, "Kd": 0.01}
+
         if pid_parameters_file_path.is_file():
             try:
-                pid_parameters = json.loads(pid_parameters_file_path.read_text())
-                self.app.log(f"Loaded PID parameters from: {pid_parameters_file_path}")
+                loaded_parameters = json.loads(pid_parameters_file_path.read_text())
+                if isinstance(loaded_parameters, dict):
+                    pid_parameters.update(loaded_parameters)
+                    self.app.log(f"Loaded PID parameters from: {pid_parameters_file_path}")
+                else:
+                    self.app.log(f"PID parameters file {pid_parameters_file_path} does not contain a JSON object.")
             except json.JSONDecodeError:
                 self.app.log(f"Error decoding PID parameters from: {pid_parameters_file_path}")
-        
+
         target_reflow_curve = self.current_reflow_profile.get("points", [])
+        if not target_reflow_curve or not all(isinstance(point, (list, tuple)) and len(point) == 2 for point in target_reflow_curve):
+            self.app.log("Invalid reflow profile points. Please select a valid profile before starting.")
+            return
+
         safety_cutoff = self.current_reflow_profile.get("safety", {}).get("max_temp_c", 260)
-        
+
         self.run_reflow(
             pid_parameters=pid_parameters,
             target_reflow_curve=target_reflow_curve,
             safety_cutoff=safety_cutoff
         )
-        
+
         start_button.disabled = True
         stop_button.disabled = False
         change_profile_button.disabled = True
@@ -206,7 +226,12 @@ class ReflowControl(Vertical):
         self.is_reflow_running = True
         
         ssr = SSR(self.relay_pin)
-        pid = PID(pid_parameters["Kp"], pid_parameters["Ki"], pid_parameters["Kd"], setpoint=target_reflow_curve[0][1])
+        pid = PID(
+            pid_parameters.get("Kp", 1.0),
+            pid_parameters.get("Ki", 0.1),
+            pid_parameters.get("Kd", 0.01),
+            setpoint=target_reflow_curve[0][1],
+        )
         pid.output_limits = (0, 100)
         
         start_time = time.time()
@@ -225,7 +250,7 @@ class ReflowControl(Vertical):
 
                     # Update plot with actual temperature
                     self.app.call_from_thread(
-                        self.app.query_one("ReflowCurvePlot").add_actual_point,
+                        self.app.query_one(ReflowCurvePlot).add_actual_point,
                         round(now, 1),
                         self.current_temperature
                     )
@@ -234,28 +259,25 @@ class ReflowControl(Vertical):
                     if now >= t_end:
                         break
                     
-                    # Thermal safety cutoff
-                    if self.current_temperature >= safety_cutoff:
-                        self.app.log(f"SAFETY TRIP: Temp ({self.current_temperature}°C) exceeded max limit ({safety_cutoff}°C)!")
-                        return
-
                     # Interpolate target setpoint for current time
                     progress = (now - t_start) / (t_end - t_start) if t_end > t_start else 1.0
                     pid.setpoint = temp_start + progress * (temp_end - temp_start)
 
-                    # Calculate PID duty cycle (0.0 to 1.0)
-                    duty_cycle = pid(self.current_temperature) / 100.0
-
-                    # Safety override
+                    # Safety override for temperatures at or above the configured cutoff.
                     if self.current_temperature >= safety_cutoff:
-                        duty_cycle = 0.0  # Force heater OFF regardless of PID demand
-                        
                         if not safety_tripped:
-                            self.app.log(f"SAFETY OVERRIDE: Temp ({self.current_temperature:.1f}°C) >= max limit ({safety_cutoff}°C). SSR disabled.")
+                            self.app.log(
+                                f"SAFETY OVERRIDE: Temp ({self.current_temperature:.1f}°C) >= max limit ({safety_cutoff}°C). SSR disabled."
+                            )
                             safety_tripped = True
-                    elif safety_tripped:
-                        self.app.log(f"SAFETY RECOVERY: Temp ({self.current_temperature:.1f}°C) dropped below max limit. Control restored.")
-                        safety_tripped = False
+                        duty_cycle = 0.0
+                    else:
+                        if safety_tripped:
+                            self.app.log(
+                                f"SAFETY RECOVERY: Temp ({self.current_temperature:.1f}°C) dropped below max limit. Control restored."
+                            )
+                            safety_tripped = False
+                        duty_cycle = pid(self.current_temperature) / 100.0
 
                     # Time-Proportional Control (1.0s window)
                     cycle_time = 1.0
