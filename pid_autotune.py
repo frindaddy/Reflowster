@@ -16,7 +16,6 @@ import digitalio
 from hw.max31855 import MAX31855
 from hw.ssr import SSR
 
-
 JSON_OUTPUT_PATH = Path(__file__).resolve().parent / "pid_parameters.json"
 
 
