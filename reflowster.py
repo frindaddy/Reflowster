@@ -47,7 +47,7 @@ class Reflowster(App):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--relay-pin", default=10, type=int, help="GPIO pin number for the SSR relay")
+    parser.add_argument("--relay-pin", default=17, type=int, help="GPIO pin number for the SSR relay")
     parser.add_argument("--cs-pin", default="D5", help="Board pin name used for MAX31855 CS")
     args = parser.parse_args()
 

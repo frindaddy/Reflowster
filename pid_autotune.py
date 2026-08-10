@@ -21,7 +21,7 @@ JSON_OUTPUT_PATH = Path(__file__).resolve().parent / "pid_parameters.json"
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Autotune PID parameters for Reflowster.")
-    parser.add_argument("--relay-pin", type=int, default=10, help="GPIO pin number for the SSR relay")
+    parser.add_argument("--relay-pin", type=int, default=17, help="GPIO pin number for the SSR relay")
     parser.add_argument("--cs-pin", default="D5", help="Board pin name used for MAX31855 CS")
     parser.add_argument("--setpoint", type=float, default=180.0, help="Target temperature for autotuning (°C)")
     parser.add_argument("--hysteresis", type=float, default=5.0, help="Temperature hysteresis around the setpoint (°C)")
