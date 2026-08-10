@@ -35,18 +35,6 @@ class Reflowster(App):
     def action_focus_previous_widget(self) -> None:
         """Move focus to the previous available widget."""
         self.screen.focus_previous()
-        
-    def action_start_reflow(self) -> None:
-        """Start the reflow process."""
-        self.query_one(ReflowControl).start_reflow()
-        
-    def action_stop_reflow(self) -> None:
-        """Stop the reflow process."""
-        self.query_one(ReflowControl).stop_reflow()
-        
-    def action_change_profile(self) -> None:
-        """Change the reflow profile."""
-        self.query_one(ReflowControl).change_profile()
 
 if __name__ == "__main__":
     Reflowster().run()
