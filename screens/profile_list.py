@@ -3,7 +3,7 @@ from pathlib import Path
 from textual.app import ComposeResult
 from textual.containers import Vertical
 from textual.screen import ModalScreen
-from textual.widgets import DirectoryTree, Label
+from textual.widgets import DirectoryTree, Footer, Label
 
 
 class ReflowProfileList(ModalScreen[Path]):
@@ -22,6 +22,7 @@ class ReflowProfileList(ModalScreen[Path]):
         with Vertical(id="profile-list"):
             yield Label("Select a Reflow Profile:")
             yield DirectoryTree("reflow_profiles/", id="profile-tree")
+            yield Footer()
     
     def action_close_modal(self) -> None:
         self.dismiss(None)
