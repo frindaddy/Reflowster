@@ -33,7 +33,7 @@ Once running, select a reflow profile from the `reflow_profiles/` directory and 
 
 Generate tuned PID parameters automatically and save them to `pid_parameters.json` using:
 
-```powershell
+```bash
 python pid_autotune.py --relay-pin 10 --cs-pin D5 --setpoint 180
 ```
 
