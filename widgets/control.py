@@ -128,7 +128,7 @@ class ReflowControl(Vertical):
         
     def update_temperature(self) -> None:
         """Update the current temperature from the MAX31855 sensor."""
-        sensor = MAX31855()
+        sensor = MAX31855(spi=self.spi, cs=self.cs)
         self.current_temperature = sensor.read_temperature()
     
     def watch_current_temperature(self, value: float) -> None:
