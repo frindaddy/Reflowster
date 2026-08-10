@@ -23,7 +23,29 @@ class ReflowControl(Vertical):
     """Control panel for the reflow oven."""
     
     can_focus = True    
-            
+    
+    current_temperature = reactive(0.0)
+    current_time = reactive(0)
+    relay_state = reactive(False)
+    is_reflow_running = reactive(False)
+    current_reflow_profile = reactive(
+        {
+            "name": "Sn63Pb37 #5",
+            "description": "Reflow profile for Sn63Pb37 solder paste (#5). Times in seconds, temps in °C (e.g. points: [time, temperature]). Max temp is 250C.",
+            "metadata": { "paste": "Sn63Pb37", "type": "#5", "author": "Reflowster-default" },
+            "safety": { "max_temp_c": 260 },
+            "points": [
+                [0, 25],
+                [90, 150],
+                [150, 170],
+                [210, 170],
+                [255, 235],
+                [285, 235],
+                [360, 50]
+            ]
+        }
+    )
+    
     BINDINGS = [  # noqa: RUF012
         Binding("s", "start_reflow_action", "Start Reflow", show=True),
         Binding("x", "stop_reflow_action", "Stop Reflow", show=True),
@@ -36,28 +58,6 @@ class ReflowControl(Vertical):
         self.spi = spi
         self.cs = cs
         self.sensor = MAX31855(spi=self.spi, cs=self.cs)
-
-        self.current_temperature = reactive(0.0)
-        self.current_time = reactive(0)
-        self.relay_state = reactive(False)
-        self.is_reflow_running = reactive(False)
-        self.current_reflow_profile = reactive(
-            {
-                "name": "Sn63Pb37 #5",
-                "description": "Reflow profile for Sn63Pb37 solder paste (#5). Times in seconds, temps in °C (e.g. points: [time, temperature]). Max temp is 250C.",
-                "metadata": { "paste": "Sn63Pb37", "type": "#5", "author": "Reflowster-default" },
-                "safety": { "max_temp_c": 260 },
-                "points": [
-                    [0, 25],
-                    [90, 150],
-                    [150, 170],
-                    [210, 170],
-                    [255, 235],
-                    [285, 235],
-                    [360, 50]
-                ]
-            }
-        )
     
     def compose(self) -> ComposeResult:
         yield Button("Start", id="start", variant="success")
