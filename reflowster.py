@@ -13,9 +13,6 @@ class Reflowster(App):
     CSS_PATH = "style.tcss"
     BINDINGS = [  # noqa: RUF012
         ("q", "quit", "Quit"),
-        ("s", "start_reflow", "Start Reflow"),
-        ("t", "stop_reflow", "Stop Reflow"),
-        ("c", "change_profile", "Change Profile"),
         ("down", "focus_next_widget", "Next"),
         ("right", "focus_next_widget", "Next"),
         ("up", "focus_previous_widget", "Previous"),
