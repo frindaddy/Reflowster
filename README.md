@@ -20,7 +20,7 @@ Install dependencies:
 
 ## Usage
 
-Run the application with the SSR relay pin and MAX31855 chip-select pin:
+Run the application with the solid-state relay pin and MAX31855 chip-select pin:
 
 ```bash
 python reflowster.py --relay-pin 10 --cs-pin D5
