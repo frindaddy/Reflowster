@@ -16,6 +16,7 @@ from textual.worker import get_current_worker
 from hw.max31855 import MAX31855
 from hw.ssr import SSR
 from screens.profile_list import ReflowProfileList
+from widgets.plot import ReflowCurvePlot
 
 
 class ReflowControl(Vertical):
