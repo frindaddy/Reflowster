@@ -2,6 +2,8 @@ import json
 import time
 from pathlib import Path
 
+import board
+import digitalio
 from simple_pid import PID
 from textual import on, work
 from textual.app import ComposeResult
@@ -18,37 +20,41 @@ from screens.profile_list import ReflowProfileList
 
 class ReflowControl(Vertical):
     """Control panel for the reflow oven."""
-    can_focus = True    
     
+    can_focus = True    
+            
     BINDINGS = [  # noqa: RUF012
         Binding("s", "start_reflow_action", "Start Reflow", show=True),
         Binding("x", "stop_reflow_action", "Stop Reflow", show=True),
         Binding("c", "change_profile_action", "Change Profile", show=True)
     ]
     
-    relay_pin = 10
-    
-    current_temperature = reactive(0.0)
-    current_time = reactive(0)
-    relay_state = reactive(False)
-    is_reflow_running = reactive(False)
-    current_reflow_profile = reactive(
-        {
-            "name": "Sn63Pb37 #5",
-            "description": "Reflow profile for Sn63Pb37 solder paste (#5). Times in seconds, temps in °C (e.g. points: [time, temperature]). Max temp is 250C.",
-            "metadata": { "paste": "Sn63Pb37", "type": "#5", "author": "Reflowster-default" },
-            "safety": { "max_temp_c": 260 },
-            "points": [
-                [0, 25],
-                [90, 150],
-                [150, 170],
-                [210, 170],
-                [255, 235],
-                [285, 235],
-                [360, 50]
-            ]
-        }
-    )
+    def __init__(self, relay_pin: int, spi: board.SPI, cs: digitalio.DigitalInOut) -> None:
+        self.relay_pin = relay_pin
+        self.spi = spi
+        self.cs = cs
+        
+        self.current_temperature = reactive(0.0)
+        self.current_time = reactive(0)
+        self.relay_state = reactive(False)
+        self.is_reflow_running = reactive(False)
+        self.current_reflow_profile = reactive(
+            {
+                "name": "Sn63Pb37 #5",
+                "description": "Reflow profile for Sn63Pb37 solder paste (#5). Times in seconds, temps in °C (e.g. points: [time, temperature]). Max temp is 250C.",
+                "metadata": { "paste": "Sn63Pb37", "type": "#5", "author": "Reflowster-default" },
+                "safety": { "max_temp_c": 260 },
+                "points": [
+                    [0, 25],
+                    [90, 150],
+                    [150, 170],
+                    [210, 170],
+                    [255, 235],
+                    [285, 235],
+                    [360, 50]
+                ]
+            }
+        )
     
     def compose(self) -> ComposeResult:
         yield Button("Start", id="start", variant="success")

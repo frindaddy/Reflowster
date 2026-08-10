@@ -1,3 +1,7 @@
+import argparse
+
+import board
+import digitalio
 from textual.app import App, ComposeResult
 from textual.containers import HorizontalGroup
 from textual.widgets import Footer, Header
@@ -23,7 +27,7 @@ class Reflowster(App):
         
         yield Header()
         yield HorizontalGroup(
-            ReflowControl(),
+            ReflowControl(relay_pin=args.relay_pin, spi=args.spi, cs=args.cs),
             ReflowCurvePlot()
         )
         yield Footer()
@@ -37,4 +41,10 @@ class Reflowster(App):
         self.screen.focus_previous()
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("relay_pin", default=10, type=int)
+    parser.add_argument("spi", default=board.SPI(), type=board.SPI)
+    parser.add_argument("cs_pin", default=digitalio.DigitalInOut(board.D5), type=digitalio.DigitalInOut)
+    args = parser.parse_args()
+    
     Reflowster().run()
