@@ -258,7 +258,7 @@ class ReflowControl(Vertical):
                     # Update plot with actual temperature
                     self.app.call_from_thread(
                         self.app.query_one(ReflowCurvePlot).add_actual_point,
-                        round(now, 1),
+                        round(now),
                         self.current_temperature
                     )
                     
