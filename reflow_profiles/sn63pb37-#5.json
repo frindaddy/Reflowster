@@ -2,14 +2,14 @@
   "name": "Sn63Pb37 #5",
   "description": "Reflow profile for Sn63Pb37 solder paste (#5). Times in seconds, temps in °C (e.g. points: [time, temperature]). Max temp is 250C.",
   "metadata": { "paste": "Sn63Pb37", "type": "#5", "author": "Reflowster-default" },
-  "safety": { "max_temp_c": 250 },
-  "points": [ 
+  "safety": { "max_temp_c": 230 },
+  "points": [
     [0, 25],
-    [90, 150],
-    [150, 170],
-    [210, 170],
-    [255, 235],
-    [285, 235],
-    [360, 50]
+    [90, 125],
+    [180, 125],
+    [270, 170],
+    [290, 220],
+    [310, 220],
+    [480, 50]
   ]
 }
