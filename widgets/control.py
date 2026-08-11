@@ -234,8 +234,10 @@ class ReflowControl(Vertical):
             setpoint=target_reflow_curve[0][1],
         )
         pid.output_limits = (0, 100)
-        pid.integral_limits = (-20, 20)
+        pid.integral_limits = (-25, 25)
         
+        k_ff = 140.0
+
         start_time = time.time()
         completion_msg = "Reflow process completed successfully."
         safety_tripped = False
@@ -245,10 +247,8 @@ class ReflowControl(Vertical):
                 t_start, temp_start = target_reflow_curve[i]
                 t_end, temp_end = target_reflow_curve[i + 1]
                 
-                # Calculate expected ramp velocity in °C/s for setpoint feedforward
-                duration = t_end - t_start
-                ramp_rate = (temp_end - temp_start) / duration if duration > 0 else 0.0
-                k_ff = 15.0  # Feedforward gain pushing extra heat during rising ramps
+                dt_segment = t_end - t_start
+                ramp_rate = (temp_end - temp_start) / dt_segment if dt_segment > 0 else 0.0
 
                 while not worker.is_cancelled:
                     self.update_temperature()
@@ -267,15 +267,11 @@ class ReflowControl(Vertical):
                         break
                     
                     # Interpolate target setpoint for current time
-                    progress = (now - t_start) / duration if duration > 0 else 1.0
+                    progress = (now - t_start) / dt_segment if dt_segment > 0 else 1.0
                     pid.setpoint = temp_start + progress * (temp_end - temp_start)
-
-                    # Reset integral accumulation if lagging behind setpoint by > 15°C
                     tracking_error = pid.setpoint - self.current_temperature
-                    if tracking_error > 15.0:
-                        pid.reset()
 
-                    # Safety override for temperatures at or above the configured cutoff.
+                    # Safety Cutoff Check
                     if self.current_temperature >= safety_cutoff:
                         if not safety_tripped:
                             self.app.log(
@@ -289,13 +285,20 @@ class ReflowControl(Vertical):
                                 f"SAFETY RECOVERY: Temp ({self.current_temperature:.1f}°C) dropped below max limit. Control restored."
                             )
                             safety_tripped = False
-                            
-                        # PID output + feedforward term based on ramp velocity
-                        pid_output = pid(self.current_temperature)
-                        feedforward = ramp_rate * k_ff if ramp_rate > 0 else 0.0
-                        total_output = max(0.0, min(100.0, pid_output + feedforward))
-                        
-                        duty_cycle = total_output / 100.0
+
+                        if ramp_rate < -0.05:
+                            # Shut off relay completely during cooling ramps
+                            duty_cycle = 0.0
+                            pid.reset()
+                        elif tracking_error > 5.0:
+                            # Lock 100% duty cycle when trailing setpoint by > 5°C
+                            duty_cycle = 1.0
+                            pid._integral = 0.0
+                        else:
+                            # Active within ±5°C window of target setpoint
+                            feedforward_output = max(0.0, ramp_rate * k_ff) if ramp_rate > 0 else 0.0
+                            pid_out = pid(self.current_temperature)
+                            duty_cycle = max(0.0, min(1.0, (pid_out + feedforward_output) / 100.0))
 
                     # Time-Proportional Control (1.0s window)
                     cycle_time = 1.0
