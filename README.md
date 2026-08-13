@@ -2,7 +2,9 @@
 
 Reflowster is a Textual-based control app for a solder reflow oven built from a toaster oven. It reads solder reflow profiles from JSON files, monitors temperature via a MAX31855 thermocouple reader, and controls a solid-state relay (SSR) using PID and time-proportional control.
 
-<img width="1025" height="623" alt="image" src="https://github.com/user-attachments/assets/c4bde029-69ac-475f-a06e-c6271a99eb59" />
+<div align="center">
+   <img width="1747" height="1025" alt="ezgif-8b123e903ca13df2" src="https://github.com/user-attachments/assets/d644167b-4b00-4c7e-a5d0-4b6c6b481c5b" />
+</div>
 
 ## Requirements
 
